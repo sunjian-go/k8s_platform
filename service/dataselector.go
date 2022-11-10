@@ -1,6 +1,7 @@
 package service
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"sort"
 	"strings"
 	"time"
@@ -83,21 +84,32 @@ func (d *dataSelector) Filter() *dataSelector {
 //第四步：分页
 //Paginate方法用于数组的分页，根据Limit和Page的传参，取一定范围内的数据，返回
 func (d *dataSelector) Paginate() *dataSelector {
-	//根据limit和page的入参，定义快捷变量
-	limit := d.dataSelectQuery.PaginateQuery.Limit
+	//根据pagelist和page的入参，定义快捷变量,pagelist是每页的个数，page是页
+	pagelist := d.dataSelectQuery.PaginateQuery.Limit
 	page := d.dataSelectQuery.PaginateQuery.Page
 	//检验参数的合法性
-	if limit <= 0 || page <= 0 {
+	if pagelist <= 0 || page <= 0 {
 		return d
 	}
-	//定义取数范举例：25个元素的数组，limit是10，page是3，startIndex是20，endIndex是30（实际上endIndex是25）
-	//limit是每页的个数，page是页
-	startIndex := limit * (page - 1)
-	endIndex := limit * page
-	//处理最后一页，这时候就把endIndex由30改为25了
+	//定义取数范围需要的startIndex和endIndex
+	//举例：25个元素的数组，limit是10，page是3，startIndex是20，endIndex是29（实际上endIndex是24）
+	startIndex := pagelist * (page - 1)
+	endIndex := pagelist*page - 1
+	//处理最后一页，这时候就把endIndex由30改为24了
 	if len(d.GenericDataList) < endIndex {
-		endIndex = len(d.GenericDataList)
+		endIndex = len(d.GenericDataList) - 1
 	}
 	d.GenericDataList = d.GenericDataList[startIndex:endIndex]
 	return d
+}
+
+//定义podCell类型，实现DataCell接口，用于类型转换
+//定义podCell类型，实现GetCreateion和GetName方法后，可进行类型转换
+type podCell corev1.Pod
+
+func (p podCell) GetCreation() time.Time {
+	return p.CreationTimestamp.Time
+}
+func (p podCell) GetName() string {
+	return p.Name
 }
