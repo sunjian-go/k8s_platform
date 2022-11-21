@@ -15,9 +15,20 @@ type dataSelector struct {
 }
 
 //DataCell接口，用于各种资源list的类型转换，转换后可以使用dataSelector的自定义排序方法
-type DataCell interface {
+type DataCell interface { //谁重写了datacell接口里面的方法，谁就是定义了datecell接口，就跟datacell类型划等号
 	GetCreation() time.Time
 	GetName() string
+}
+
+//定义podCell类型，实现DataCell接口，用于类型转换
+//定义podCell类型，实现GetCreateion和GetName方法后，可进行类型转换
+type podCell corev1.Pod
+
+func (p podCell) GetCreation() time.Time {
+	return p.CreationTimestamp.Time
+}
+func (p podCell) GetName() string {
+	return p.Name
 }
 
 //DataSelectQuery: 定义过滤和分页的属性，过滤：Name,分页：Limit和Page
@@ -40,17 +51,17 @@ type paginateQuery struct {
 //实现自定义结构的排序，需要重写Len、Swap、Less方法
 //Len方法用于获取数组长度
 func (d *dataSelector) Len() int {
-	return len(d.GenericDataList) //计算出资源转换完成之后的资源数组的长度，直接返回
+	return len(d.GenericDataList) //计算出资源转换完成之后的资源数组的长度，直接返回，也就是计算有几个datecell
 }
 
 //Swap方法用于数组中的元素在比较大小后的位置交换，可定义升序或降序
 func (d *dataSelector) Swap(i, j int) { //直接将资源数组的前一位和后一位调换
-	d.GenericDataList[i], d.GenericDataList[j] = d.GenericDataList[j], d.GenericDataList[i]
+	d.GenericDataList[i], d.GenericDataList[j] = d.GenericDataList[j], d.GenericDataList[i] //将前后两个datecell交换位置
 }
 
 //Less方法用于定义数组中元素排序的“大小”的比较方式
 func (d *dataSelector) Less(i, j int) bool {
-	a := d.GenericDataList[i].GetCreation() //通过时间进行比较
+	a := d.GenericDataList[i].GetCreation() //通过datecell里面的时间进行比较
 	b := d.GenericDataList[j].GetCreation()
 	return b.Before(a) //判断b时间之前于a时间是否为真，为真返回true，触发Swap方法进行位置调换，反之false
 }
@@ -71,7 +82,7 @@ func (d *dataSelector) Filter() *dataSelector {
 	//若Name的传参不为空，则返回元素中包含Name的所有元素
 	filteredList := []DataCell{} //声明一个新数组，若Name包含，则把数据放进新数组，返回出去
 	for _, value := range d.GenericDataList {
-		objName := value.GetName()
+		objName := value.GetName() //相当于直接返回了datecell类型变量的NAME
 		if !strings.Contains(objName, d.dataSelectQuery.FilterQuery.Name) {
 			continue
 		}
@@ -97,19 +108,8 @@ func (d *dataSelector) Paginate() *dataSelector {
 	endIndex := pagelist*page - 1
 	//处理最后一页，这时候就把endIndex由30改为24了
 	if len(d.GenericDataList) < endIndex {
-		endIndex = len(d.GenericDataList) - 1
+		endIndex = len(d.GenericDataList)
 	}
 	d.GenericDataList = d.GenericDataList[startIndex:endIndex]
 	return d
-}
-
-//定义podCell类型，实现DataCell接口，用于类型转换
-//定义podCell类型，实现GetCreateion和GetName方法后，可进行类型转换
-type podCell corev1.Pod
-
-func (p podCell) GetCreation() time.Time {
-	return p.CreationTimestamp.Time
-}
-func (p podCell) GetName() string {
-	return p.Name
 }

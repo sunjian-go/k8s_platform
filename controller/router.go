@@ -10,10 +10,9 @@ type router struct {
 }
 
 func (r *router) InitApiRouter(router *gin.Engine) { //用router类型的指针去调用这个方法
-	router.GET("/testapi", func(ctext *gin.Context) {
-		ctext.JSON(200, gin.H{
-			"msg":  "test success",
-			"data": nil,
-		})
-	})
+	router.GET("/api/k8s/pods", Pod.Getpods)
+	router.GET("/api/k8s/PodDetail", Pod.GetPodDetail)
+	router.DELETE("/api/k8s/delete", Pod.DelPod)
+	router.PUT("/api/k8s/update", Pod.UpdatePod)
+	router.GET("/api/k8s/GetContName", Pod.GetContName)
 }
