@@ -82,7 +82,8 @@ func (p *pod) DelPod(ctx *gin.Context) {
 		PodName   string `json:"podName"`
 		Namespace string `json:"namespace"`
 	})
-	err := ctx.ShouldBind(params)
+	//form格式适用于Bind方法，json格式适用于ShouldBindJSON方法
+	err := ctx.ShouldBindJSON(params)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"msg":  "绑定数据失败",
@@ -157,5 +158,51 @@ func (p *pod) GetContName(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{
 		"msg":  "获取容器名成功",
 		"data": conts,
+	})
+}
+
+//获取日志
+func (p *pod) GetLogs(ctx *gin.Context) {
+	params := new(struct {
+		ContName  string `form:"contName"`
+		PodName   string `form:"podName"`
+		Namespace string `form:"namespace"`
+	})
+	err := ctx.Bind(params)
+	if err != nil {
+		ctx.JSON(500, gin.H{
+			"msg":  "绑定数据失败",
+			"data": nil,
+		})
+		return
+	}
+	var podlogs string
+	podlogs, err = service.Pod.GetPodLog(params.ContName, params.PodName, params.Namespace)
+	if err != nil {
+		ctx.JSON(500, gin.H{
+			"msg":  "获取容器日志失败",
+			"data": nil,
+		})
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"msg":  "获取容器日志成功",
+		"data": podlogs,
+	})
+}
+
+//获取pod数量
+func (p *pod) GetPodNum(ctx *gin.Context) {
+	podsNps, err := service.Pod.GetPodNum()
+	if err != nil {
+		ctx.JSON(500, gin.H{
+			"msg":  "获取pod数量失败",
+			"data": nil,
+		})
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"msg":  "获取pod数量成功",
+		"data": podsNps,
 	})
 }

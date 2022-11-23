@@ -18,6 +18,11 @@ var Pod pod
 type pod struct {
 }
 
+type PodsNp struct {
+	Namespace string
+	PodNum    int
+}
+
 //定义列表的返回内容，Items是pod元素列表，Total是元素数量
 type PodResp struct {
 	PodNum int          `json:"podNum"`
@@ -160,7 +165,7 @@ func (p *pod) GetPodLog(containerName, podName, namespace string) (log string, e
 	podLogs, err := req.Stream(context.TODO())
 	if err != nil {
 		logger.Error(errors.New("获取PodLog失败" + err.Error()))
-		return nil, errors.New("获取PodLog失败" + err.Error())
+		return " ", errors.New("获取PodLog失败" + err.Error())
 	}
 	defer podLogs.Close() //记得关闭
 
@@ -172,4 +177,28 @@ func (p *pod) GetPodLog(containerName, podName, namespace string) (log string, e
 		return " ", errors.New("复制PodLog失败" + err.Error())
 	}
 	return buf.String(), nil
+}
+
+//获取每个namespace的pod数量
+func (p *pod) GetPodNum() (podsNps []*PodsNp, err error) {
+	//获取namespace列表
+	namespaceList, err := K8s.K8sClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, namespace := range namespaceList.Items {
+		//获取pod列表
+		podList, err := K8s.K8sClientSet.CoreV1().Pods(namespace.Name).List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+		//组装数据
+		podsNp := &PodsNp{
+			Namespace: namespace.Name,
+			PodNum:    len(podList.Items),
+		}
+		//添加到podsNps数组中
+		podsNps = append(podsNps, podsNp)
+	}
+	return podsNps, nil
 }

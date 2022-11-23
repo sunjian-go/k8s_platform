@@ -10,9 +10,21 @@ type router struct {
 }
 
 func (r *router) InitApiRouter(router *gin.Engine) { //用router类型的指针去调用这个方法
-	router.GET("/api/k8s/pods", Pod.Getpods)
-	router.GET("/api/k8s/PodDetail", Pod.GetPodDetail)
-	router.DELETE("/api/k8s/delete", Pod.DelPod)
-	router.PUT("/api/k8s/update", Pod.UpdatePod)
-	router.GET("/api/k8s/GetContName", Pod.GetContName)
+	//router可以一直点出来
+	router.
+		//pod操作
+		GET("/api/k8s/pods", Pod.Getpods).
+		GET("/api/k8s/PodDetail", Pod.GetPodDetail).
+		DELETE("/api/k8s/delete", Pod.DelPod).
+		PUT("/api/k8s/update", Pod.UpdatePod).
+		GET("/api/k8s/GetContName", Pod.GetContName).
+		GET("/api/k8s/getlogs", Pod.GetLogs).
+		GET("/api/k8s/podnum", Pod.GetPodNum).
+		//deployment操作
+		GET("/api/k8s/appsv1/getdeploy", Deployment.GetDeployments).
+		GET("/api/k8s/appsv1/getdetail", Deployment.GetDeploymentDetail).
+		DELETE("/api/k8s/appsv1/deldeployment", Deployment.DelDeployment).
+		PUT("/api/k8s/appsv1/updatedeployment", Deployment.UpdateDeployment).
+		GET("/api/k8s/appsv1/getdeploymenynum", Deployment.GetDeployNum).
+		POST("/api/k8s/appsv1/createdeployment", Deployment.CreateDeployment)
 }

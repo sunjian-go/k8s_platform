@@ -1,6 +1,7 @@
 package service
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sort"
 	"strings"
@@ -29,6 +30,17 @@ func (p podCell) GetCreation() time.Time {
 }
 func (p podCell) GetName() string {
 	return p.Name
+}
+
+//定义deploymentCell类型，实现相关两个接口
+//定义deployCell类型，实现GetCreateion和GetName方法后，可进行类型转换
+type deployCell appsv1.Deployment
+
+func (d deployCell) GetCreation() time.Time {
+	return d.CreationTimestamp.Time
+}
+func (d deployCell) GetName() string {
+	return d.Name
 }
 
 //DataSelectQuery: 定义过滤和分页的属性，过滤：Name,分页：Limit和Page
@@ -90,6 +102,7 @@ func (d *dataSelector) Filter() *dataSelector {
 	}
 	d.GenericDataList = filteredList
 	return d
+
 }
 
 //第四步：分页
